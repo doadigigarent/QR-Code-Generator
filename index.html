@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore di QR Code</title>
+    
+    <!-- Inclusione di Tailwind CSS per lo stile -->
+    <script src="tailwindcss.js"></script>
+    
+    <!-- Inclusione della libreria qrcode.js per la generazione del QR code -->
+    <script src="qrcode.min.js"></script>
+    
+    <!-- Font di Google per un look moderno -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Applica il font Inter a tutta la pagina */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Stile per il contenitore del QR code per una transizione fluida */
+        #qrcode-container {
+            transition: all 0.3s ease-in-out;
+            min-height: 288px; /* 256px (qr) + 32px (padding) */
+        }
+        /* Stile per il QR code generato (l'immagine) per un aspetto pulito */
+        #qrcode-container img {
+            margin: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        /* Nasconde il contenuto principale fino alla selezione della lingua */
+        #app-container {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Modale per la selezione della lingua -->
+    <div id="language-modal" class="w-full max-w-md mx-auto">
+        <div class="bg-gray-800 text-white rounded-2xl shadow-2xl p-6 sm:p-8 text-center">
+            <h2 class="text-2xl font-bold text-white">Please select your language</h2>
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button data-lang="en" class="lang-btn w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors">English</button>
+                <button data-lang="es" class="lang-btn w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors">Español</button>
+                <button data-lang="fr" class="lang-btn w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors">Français</button>
+                <button data-lang="de" class="lang-btn w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors">Deutsch</button>
+                <button data-lang="it" class="lang-btn w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors">Italiano</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenuto principale dell'applicazione (inizialmente nascosto) -->
+    <div id="app-container" class="w-full max-w-md mx-auto">
+        <!-- Card principale -->
+        <div class="bg-gray-800 text-white rounded-2xl shadow-2xl p-6 sm:p-8">
+            <div class="text-center">
+                <h1 data-translate-key="title" class="text-3xl font-bold tracking-tight text-white sm:text-4xl"></h1>
+                <p data-translate-key="subtitle" class="mt-3 text-gray-400"></p>
+            </div>
+
+            <!-- Form per l'input -->
+            <div class="mt-8">
+                <div class="space-y-4">
+                    <div>
+                        <label for="url-input" class="sr-only">URL</label>
+                        <input type="url" id="url-input" data-translate-key="placeholderUrl" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                    </div>
+                    
+                    <button id="generate-btn" data-translate-key="generateButton" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500">
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenitore per il QR Code generato -->
+        <div id="qrcode-wrapper" class="mt-6">
+             <div id="qrcode-container" class="bg-gray-800 p-4 rounded-2xl shadow-2xl flex items-center justify-center">
+                <div id="placeholder" class="text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5a1.875 1.875 0 0 1-1.875-1.875v-4.5ZM13.5 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 13.5 9.375v-4.5Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 16.5h.75v.75h-.75v-.75ZM16.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75Z" />
+                    </svg>
+                    <p data-translate-key="placeholderQr" class="mt-2 text-sm"></p>
+                </div>
+             </div>
+             <div id="download-container" class="text-center mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- GESTIONE TRADUZIONI ---
+        const translations = {
+            it: {
+                title: "Generatore di QR Code",
+                subtitle: "Inserisci un URL per creare il tuo QR code personale.",
+                placeholderUrl: "https://www.esempio.com",
+                placeholderError: "Per favore, inserisci un URL valido.",
+                generateButton: "Genera QR Code",
+                placeholderQr: "Il tuo QR code apparirà qui",
+                downloadButton: "Scarica PNG",
+            },
+            en: {
+                title: "QR Code Generator",
+                subtitle: "Enter a URL to create your personal QR code.",
+                placeholderUrl: "https://www.example.com",
+                placeholderError: "Please enter a valid URL.",
+                generateButton: "Generate QR Code",
+                placeholderQr: "Your QR code will appear here",
+                downloadButton: "Download PNG",
+            },
+            es: {
+                title: "Generador de Códigos QR",
+                subtitle: "Introduce una URL para crear tu código QR personal.",
+                placeholderUrl: "https://www.ejemplo.com",
+                placeholderError: "Por favor, introduce una URL válida.",
+                generateButton: "Generar Código QR",
+                placeholderQr: "Tu código QR aparecerá aquí",
+                downloadButton: "Descargar PNG",
+            },
+            fr: {
+                title: "Générateur de QR Code",
+                subtitle: "Entrez une URL pour créer votre QR code personnel.",
+                placeholderUrl: "https://www.exemple.com",
+                placeholderError: "Veuillez entrer une URL valide.",
+                generateButton: "Générer le QR Code",
+                placeholderQr: "Votre QR code apparaîtra ici",
+                downloadButton: "Télécharger en PNG",
+            },
+            de: {
+                title: "QR-Code-Generator",
+                subtitle: "Geben Sie eine URL ein, um Ihren persönlichen QR-Code zu erstellen.",
+                placeholderUrl: "https://www.beispiel.com",
+                placeholderError: "Bitte geben Sie eine gültige URL ein.",
+                generateButton: "QR-Code generieren",
+                placeholderQr: "Ihr QR-Code wird hier angezeigt",
+                downloadButton: "PNG herunterladen",
+            }
+        };
+
+        let currentLang = 'en'; // Lingua di default
+
+        const languageModal = document.getElementById('language-modal');
+        const appContainer = document.getElementById('app-container');
+        const langButtons = document.querySelectorAll('.lang-btn');
+
+        langButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const lang = button.getAttribute('data-lang');
+                setLanguage(lang);
+            });
+        });
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang; // Aggiorna l'attributo lang dell'HTML
+            const elements = document.querySelectorAll('[data-translate-key]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-translate-key');
+                const translation = translations[lang][key];
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.placeholder = translation;
+                } else {
+                    el.innerHTML = translation;
+                }
+            });
+            languageModal.style.display = 'none';
+            appContainer.style.display = 'block';
+        }
+
+
+        // --- LOGICA DEL GENERATORE DI QR CODE ---
+        const generateBtn = document.getElementById('generate-btn');
+        const urlInput = document.getElementById('url-input');
+        const qrcodeContainer = document.getElementById('qrcode-container');
+        const placeholder = document.getElementById('placeholder');
+        const downloadContainer = document.getElementById('download-container');
+
+        let qrcode = null;
+
+        const generateQRCode = () => {
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                qrcodeContainer.innerHTML = '';
+                qrcodeContainer.appendChild(placeholder);
+                setLanguage(currentLang); // Ripristina il testo del placeholder
+                downloadContainer.innerHTML = '';
+                urlInput.focus();
+                urlInput.classList.add('ring-2', 'ring-red-500');
+                urlInput.placeholder = translations[currentLang].placeholderError;
+                return;
+            } else {
+                urlInput.classList.remove('ring-2', 'ring-red-500');
+                urlInput.placeholder = translations[currentLang].placeholderUrl;
+            }
+
+            qrcodeContainer.innerHTML = '';
+            downloadContainer.innerHTML = '';
+
+            qrcode = new QRCode(qrcodeContainer, {
+                text: url,
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            setTimeout(createDownloadLink, 100);
+        };
+        
+        const createDownloadLink = () => {
+            const img = qrcodeContainer.querySelector('img');
+            if (!img) return;
+            const dataUrl = img.src;
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = 'qrcode.png';
+            downloadLink.innerHTML = `
+                <span class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium rounded-md transition-colors cursor-pointer">
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+                      <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                    </svg>
+                    ${translations[currentLang].downloadButton}
+                </span>
+            `;
+            
+            downloadContainer.appendChild(downloadLink);
+        }
+
+        generateBtn.addEventListener('click', generateQRCode);
+
+        urlInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                generateQRCode();
+            }
+        });
+    </script>
+</body>
+</html>
